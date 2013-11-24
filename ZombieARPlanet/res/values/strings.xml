@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">ZombieARPlanet</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="action_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    
+    <string name="metaioSDKSignature">FcyYfPuk5vu5hRB6xldImA+gchzfg7TgDPoeL7T9FgQ=</string>
+    
+    
+    <string name="label_username">Username</string>
+    <string name="label_password">Password</string>
+    <string name="label_welcome">Welcome to ZombieARPlanet. Please sign in below. If this is your first time playing the enter a username and password and click the register button below.</string>
+
+</resources>
