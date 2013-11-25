@@ -14,19 +14,24 @@ import com.android.volley.Response.Listener;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.Volley;
 import com.android.zombiearplanet.R;
+import com.android.zombiearplanet.application.ZombieARApplication;
 import com.android.zombiearplanet.network.RequestQueueManager;
 import com.android.zombiearplanet.network.ZombieARRequestArgs;
 import com.android.zombiearplanet.network.ZombieClientRequest;
+import com.android.zombiearplanet.service.ZombieARLocationService;
 import com.android.zombiearplanet.util.Util;
 
 import android.os.Bundle;
 import android.app.Activity;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 public class LoginActivity extends Activity {
 	private static final String TAG = "LOGINACTIVITY";
@@ -93,8 +98,7 @@ public class LoginActivity extends Activity {
 				String name = (String) usernameEditTextView.getText().toString();
 				String pass = Util.SHA512(passwordEditTextView.getText().toString());
 				RequestQueue mRequestQueue = RequestQueueManager.getRequestQueueInstance(getApplicationContext());			
-				mRequestQueue.add(new ZombieClientRequest(Method.POST,url,ZombieARRequestArgs.getLoginRequestParameter(name, pass),loginRequestListener,loginErrorListener));
-				
+				mRequestQueue.add(new ZombieClientRequest(Method.POST,url,ZombieARRequestArgs.getLoginRequestParameter(name, pass),loginRequestListener,loginErrorListener));				
 
 			}catch(Exception e){
 				
@@ -123,6 +127,17 @@ public class LoginActivity extends Activity {
 	Listener<JSONObject> loginRequestListener = new Listener<JSONObject>(){
 		public void onResponse(JSONObject jsonRoot){
 			Log.i(TAG, "Return Data" + jsonRoot);
+			
+			String result = jsonRoot.optString("result");
+			if(result.equals("0")){
+				String username = jsonRoot.optString("username");
+				ZombieARApplication.setUsername(username);
+				Intent serviceIntent = new Intent(LoginActivity.this,ZombieARLocationService.class);
+				LoginActivity.this.startService(serviceIntent);
+				
+				Intent nextIntent = new Intent(LoginActivity.this,MainActivity.class);
+				startActivity(nextIntent);
+			}						
 		}
 	};
 	
@@ -130,7 +145,7 @@ public class LoginActivity extends Activity {
 
 		@Override
 		public void onErrorResponse(VolleyError error) {
-			Log.e(TAG, "Error " + error.getMessage());
+			Log.e(TAG, "Error " + error.getMessage());			
 		}
 		
 	};
@@ -138,6 +153,13 @@ public class LoginActivity extends Activity {
 	Listener<JSONObject> registerRequestListener = new Listener<JSONObject>(){
 		public void onResponse(JSONObject jsonRoot){
 			Log.i(TAG, "Return Data" + jsonRoot);
+			String result = jsonRoot.optString("result");
+			if(result.equals("0")){
+				Intent serviceIntent = new Intent(LoginActivity.this,ZombieARLocationService.class);
+				LoginActivity.this.startService(serviceIntent);			
+				Intent nextIntent = new Intent(LoginActivity.this,MainActivity.class);
+				startActivity(nextIntent);
+			}
 		}
 	};
 	

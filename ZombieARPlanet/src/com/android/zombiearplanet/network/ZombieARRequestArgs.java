@@ -26,4 +26,27 @@ public class ZombieARRequestArgs {
 		}
 		return obj;
 	}
+	
+	public static JSONObject getUpdateLocationParameter(String username, double longitude, double latitude){
+		JSONObject obj = new JSONObject();
+		try{
+			obj.put("action", "LOCATIONUPDATE");
+			obj.put("username", username);
+			obj.put("longitude",longitude);
+			obj.put("latitude", latitude);
+		}catch(Exception e){
+			
+		}
+		return obj;
+	}
+	
+	public static JSONObject getFindZombieParameter(){
+		JSONObject obj = new JSONObject();
+		try{
+			obj.put("action", "findzombies");
+		}catch(Exception e){
+			
+		}
+		return obj;
+	}
 }

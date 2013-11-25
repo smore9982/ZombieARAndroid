@@ -7,7 +7,8 @@
     <string name="hello_world">Hello world!</string>
     
     <string name="metaioSDKSignature">FcyYfPuk5vu5hRB6xldImA+gchzfg7TgDPoeL7T9FgQ=</string>
-    
+    <string name="drawer_open">open</string>
+    <string name="drawer_close">close</string>
     
     <string name="label_username">Username</string>
     <string name="label_password">Password</string>
