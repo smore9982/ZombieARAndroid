@@ -1,26 +1,23 @@
 package com.android.zombiearplanet.activity;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
-import com.android.volley.RequestQueue;
-import com.android.volley.VolleyError;
-import com.android.volley.Request.Method;
 import com.android.volley.Response.ErrorListener;
 import com.android.volley.Response.Listener;
+import com.android.volley.VolleyError;
 import com.android.zombiearplanet.R;
-import com.android.zombiearplanet.network.RequestQueueManager;
-import com.android.zombiearplanet.network.ZombieARRequestArgs;
-import com.android.zombiearplanet.network.ZombieClientRequest;
-import com.android.zombiearplanet.service.ZombieARLocationService;
-import com.android.zombiearplanet.util.LocationManager;
+import com.android.zombiearplanet.model.PlayerModel;
+import com.android.zombiearplanet.model.ZombieModel;
+import com.android.zombiearplanet.tasks.ZombieClientHandler;
+import com.android.zombiearplanet.util.ZombieARDataManager;
 import com.metaio.sdk.ARViewActivity;
 import com.metaio.sdk.SensorsComponentAndroid;
 import com.metaio.sdk.jni.IGeometry;
@@ -38,12 +35,25 @@ public class ZombieViewerActivity extends ARViewActivity implements SensorsCompo
 	ArrayList<IGeometry> zombieModels = new ArrayList<IGeometry>();
 	IRadar mRadar;	
 	private MetaioSDKCallbackHandler mCallbackHandler;
+	ZombieClientHandler handler;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState){
 		super.onCreate(savedInstanceState);
 		metaioSDK.setTrackingConfiguration("GPS");
-		mCallbackHandler = new MetaioSDKCallbackHandler();		
+		mCallbackHandler = new MetaioSDKCallbackHandler();
+		handler = new ZombieClientHandler(new Runnable(){
+
+			@Override
+			public void run() {
+				PlayerModel playerModel = ZombieARDataManager.getInstance().getCurrentPlayer();
+				LLACoordinate playerPos = new LLACoordinate();
+				playerPos.setLatitude(playerModel.latitude);
+				playerPos.setLongitude(playerModel.longitude);
+				mSensors.setManualLocation(playerPos);
+			}
+			
+		},10000);
 	}
 	
 	@Override
@@ -52,7 +62,8 @@ public class ZombieViewerActivity extends ARViewActivity implements SensorsCompo
 		super.onPause();
 		if (mSensors != null){
 			mSensors.registerCallback(null);
-		}			
+		}
+		handler.stopUpdates();
 	}
 
 	@Override
@@ -61,7 +72,7 @@ public class ZombieViewerActivity extends ARViewActivity implements SensorsCompo
 		if (mSensors != null){
 			mSensors.registerCallback(this);
 		}
-		
+		handler.startUpdates();
 	}
 
 	@Override
@@ -92,62 +103,35 @@ public class ZombieViewerActivity extends ARViewActivity implements SensorsCompo
 	@Override
 	protected void loadContents() {				
 		String zombieModelStr = AssetsManager.getAssetPath("Zombie1Assets/Zombie1.obj");
-				
-		for(int i=0; i<10;i++){
-			if(zombieModelStr != null){
-				IGeometry zombieGeometry = metaioSDK.createGeometry(zombieModelStr);
-				zombieModels.add(zombieGeometry);				
-			}
-		}
-				
+		
 		mRadar = metaioSDK.createRadar();
 		mRadar.setBackgroundTexture(AssetsManager.getAssetPath("radar.png"));
 		mRadar.setObjectsDefaultTexture(AssetsManager.getAssetPath("yellow.png"));
-		mRadar.setRelativeToScreen(IGeometry.ANCHOR_TL);	
+		mRadar.setRelativeToScreen(IGeometry.ANCHOR_TL);
 		
-		String url = "http://ec2-54-204-47-139.compute-1.amazonaws.com:8080/ZombieARWebService/client";
-		RequestQueue mRequestQueue = RequestQueueManager.getRequestQueueInstance(getApplicationContext());			
-		mRequestQueue.add(new ZombieClientRequest(Method.POST,url,ZombieARRequestArgs.getFindZombieParameter(),findZombieRequestListener,findZombieErrorListener));	
+		PlayerModel playerModel = ZombieARDataManager.getInstance().getCurrentPlayer();
+		LLACoordinate playerPos = new LLACoordinate();
+		playerPos.setLatitude(playerModel.latitude);
+		playerPos.setLongitude(playerModel.longitude);
+		mSensors.setManualLocation(playerPos);
+
+		List<ZombieModel> models = ZombieARDataManager.getInstance().getZombies();
+		for(int i=0; i< models.size();i++){
+			ZombieModel model = models.get(i);			
+			
+			IGeometry zombieGeometry = metaioSDK.createGeometry(zombieModelStr);		
+						
+			LLACoordinate coord = ZombieViewerActivity.this.mSensors.getLocation();
+			coord.setLatitude(model.latitude);
+			coord.setLongitude(model.longitude);
+			zombieGeometry.setTranslationLLA(coord);
+			zombieGeometry.setScale(1000f);
+			zombieGeometry.setRotation(new Rotation(0,0,270));
+			zombieGeometry.setVisible(true);		
+			mRadar.add(zombieGeometry);
+		}
 	}
 	
-	Listener<JSONObject> findZombieRequestListener = new Listener<JSONObject>(){
-		public void onResponse(JSONObject jsonRoot){
-			Log.i(TAG, "Zombie Data" + jsonRoot);
-			String result = jsonRoot.optString("result");
-			if(result.equals("0")){
-				JSONArray arr = jsonRoot.optJSONArray("locdata");
-				for(int i=0; i<arr.length() && i<10;i++){
-					JSONObject data = arr.optJSONObject(i);
-					if(data!=null){
-						String username = data.optString("username");
-						double longitude = data.optDouble("longitude",0.0);
-						double latitidue = data.optDouble("latitude",0.0);
-						
-						LLACoordinate coord = ZombieViewerActivity.this.mSensors.getLocation();
-						coord.setLatitude(latitidue);
-						coord.setLongitude(longitude);
-						zombieModels.get(i).setTranslationLLA(coord);
-						zombieModels.get(i).setScale(1000f);
-						zombieModels.get(i).setRotation(new Rotation(0,0,270));
-						zombieModels.get(i).setVisible(true);
-						
-						mRadar.add(zombieModels.get(i));
-					}
-				}
-				
-			}
-		}
-	};
-	
-	ErrorListener findZombieErrorListener = new ErrorListener(){
-
-		@Override
-		public void onErrorResponse(VolleyError error) {
-			Log.e(TAG, "Error " + error.getMessage());
-		}
-		
-	};
-
 	@Override
 	protected void onGeometryTouched(IGeometry geometry) {
 		
@@ -168,7 +152,6 @@ public class ZombieViewerActivity extends ARViewActivity implements SensorsCompo
 		@Override
 		public void onTrackingEvent(TrackingValuesVector trackingValues){
 			super.onTrackingEvent(trackingValues);
-
 		}
 	}
 

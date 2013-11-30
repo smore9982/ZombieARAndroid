@@ -1,11 +1,15 @@
 package com.android.zombiearplanet.application;
 
+import org.json.JSONObject;
+
 import android.app.Application;
 import android.content.SharedPreferences;
 
 public class ZombieARApplication extends Application{
 	private static String TAG = "ZombieARApplication";
 	private static String PREF_FILE_NAME = "ZombieARPRef";
+	
+	public static String URL_CLIENT_SERVICE = "http://ec2-54-204-47-139.compute-1.amazonaws.com:8080/ZombieARWebService/client"; 
 	
 	private static SharedPreferences pref;
 	

@@ -49,4 +49,25 @@ public class ZombieARRequestArgs {
 		}
 		return obj;
 	}
+	
+	public static JSONObject getFindHumanParameter(){
+		JSONObject obj = new JSONObject();
+		try{
+			obj.put("action", "findhumans");
+		}catch(Exception e){
+			
+		}
+		return obj;
+	}
+	
+	public static JSONObject getDataBundleArgs(String username){
+		JSONObject obj = new JSONObject();
+		try{
+			obj.put("action", "getbundle");
+			obj.put("username", username);
+		}catch(Exception e){
+			
+		}
+		return obj;
+	}
 }

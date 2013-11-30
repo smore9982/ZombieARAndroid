@@ -69,7 +69,15 @@ public abstract class BaseActivity extends Activity {
 		mDrawerList.setOnItemClickListener(new OnItemClickListener(){
 			@Override
 			public void onItemClick(AdapterView parent, View view, int position, long id) {
+				if(position == 0){
+					Intent i = new Intent(BaseActivity.this,MainActivity.class);
+					startActivity(i);
+				}
 				if(position == 1){
+					Intent i = new Intent(BaseActivity.this,ZombieMapActivity.class);
+					startActivity(i);
+				}
+				if(position == 2){
 					Intent i = new Intent(BaseActivity.this,ZombieViewerActivity.class);
 					startActivity(i);
 				}
@@ -102,7 +110,7 @@ public abstract class BaseActivity extends Activity {
 	}
 	
 	public String[] getNavigationList(){
-		String[] titles = {"Backpack","Zombie Viewer"};
+		String[] titles = {"Backpack","Zombie Map","Zombie Viewer"};
 		return titles;
 	}
 	
